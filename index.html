@@ -61,7 +61,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:10}
 
 <script>
 var SALT="scout2026";
-var H={"white": [["8190f6d3"], ["d30387f3"], ["7521747b"], ["e400932e"]], "grey": [["768f605b"], ["30f25a44", "49244dc4"], ["8f6b2462"], ["db7b78d0"]], "red": [["324adf21"], ["41fc7f52"], ["58dfce63"], ["f02c00bc"]], "black": [["a8a4e8e5"], ["4ed6f3c6"], ["fcadf2c5"], ["bee359da"]]};
+var H={"white": [["edbc9ee7"], ["58405dde"], ["01a1750c"], ["7e38d811"]], "grey": [["798f6514"], ["e3132278"], ["8cf9d55f"], ["089136d1"]], "red": [["b412dc91"], ["8eaad390"], ["80a839e6"], ["ed2bfc03"]], "black": [["fe44c1bf"], ["79dc2331"], ["ebda5307"], ["d65d487e"]]};
 var COL={white:["#ffffff","#555"],black:["#202020","#000"],grey:["#8a8f98","#4a4f58"],red:["#e0272d","#8e0f14"]};
 function fnv(s){var h=0x811c9dc5>>>0;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return ("00000000"+h.toString(16)).slice(-8)}
 function norm(v){return v.replace(/\D/g,"").replace(/^0+(?=\d)/,"")}
@@ -71,9 +71,9 @@ function show(id){document.querySelectorAll(".screen").forEach(function(e){e.cla
 document.querySelectorAll(".team").forEach(function(b){b.onclick=function(){pick(b.dataset.t)}});
 function pick(t){team=t;var c=COL[t];var r=document.documentElement.style;r.setProperty("--c",c[0]);r.setProperty("--c2",c[1]);
  var bd=$("badge");bd.textContent=t+" team";bd.style.background=c[0];bd.style.color=(t==="white"||t==="grey")?"#111":"#fff";bd.style.borderColor=c[1]==="#000"?"#fff":c[1];
- var f=$("fields");f.innerHTML="";for(var i=0;i<4;i++){f.insertAdjacentHTML("beforeend",'<div class="f" id="f'+i+'"><label><i>'+(i+1)+'</i>Checkpoint '+(i+1)+'</label><input inputmode="numeric" autocomplete="off" id="in'+i+'" maxlength="6"></div>')}
+ var f=$("fields");f.innerHTML="";for(var i=0;i<4;i++){f.insertAdjacentHTML("beforeend",'<div class="f" id="f'+i+'"><label><i>'+(i+1)+'</i>Checkpoint '+(i+1)+'</label><input inputmode="numeric" autocomplete="off" id="in'+i+'" maxlength="2"></div>')}
  $("lockwrap").className="";$("msg").textContent="";$("msg").className="msg";$("go").style.display="";
- $("sub").textContent="Type the number from each checkpoint";show("s2");$("in0").focus()}
+ $("sub").textContent="Type the digit you decrypted from each checkpoint";show("s2");$("in0").focus()}
 $("back").onclick=function(){$("sub").textContent="Which team are you?";show("s1")};
 $("go").onclick=check;
 document.addEventListener("keydown",function(e){if(e.key==="Enter"&&$("s2").classList.contains("on"))check()});
