@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><title>Scout Treasure Hunt: Unlock the Lock</title>
+<style>
+:root{--c:#fff;--c2:#1e3c78;--ink:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff}
+body{background:radial-gradient(circle at 50% 0,#2b4f9e 0,#14264f 60%,#0b1530 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
+h1{font-size:clamp(24px,6vw,40px);margin:8px 0 4px;text-align:center}
+p.sub{margin:0 0 18px;opacity:.85;text-align:center;font-size:clamp(15px,4vw,19px)}
+.screen{width:100%;max-width:560px;display:none;flex-direction:column;align-items:center}
+.screen.on{display:flex}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%}
+.team{border:4px solid #fff;border-radius:22px;padding:30px 10px;font-size:clamp(22px,6vw,32px);font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:transform .15s}
+.team:active{transform:scale(.95)}
+.team[data-t=white]{background:#fff;color:#1b1b1b;border-color:#bbb}
+.team[data-t=black]{background:#161616;color:#fff}
+.team[data-t=grey]{background:#8a8f98;color:#fff}
+.team[data-t=red]{background:#d71f26;color:#fff}
+svg.lock{width:min(54vw,240px);height:auto;overflow:visible;margin:4px 0 6px}
+.shackle{transform-origin:70px 60px;transition:transform .9s cubic-bezier(.3,1.6,.5,1)}
+.open .shackle{transform:translateY(-26px) rotate(-38deg) translateX(0)}
+.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-12px)}40%,80%{transform:translateX(12px)}}
+.glow{filter:drop-shadow(0 0 18px #ffd84a)}
+.badge{padding:6px 18px;border-radius:999px;font-weight:800;border:3px solid #fff;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin:10px 0}
+.f{background:rgba(255,255,255,.1);border-radius:16px;padding:10px 12px;border:3px solid transparent}
+.f label{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:6px}
+.f label i{width:26px;height:26px;border-radius:50%;background:#ffc800;color:#000;display:inline-flex;align-items:center;justify-content:center;font-style:normal}
+.f input{width:100%;font-size:28px;font-weight:800;text-align:center;padding:10px;border-radius:12px;border:none;background:#fff;color:#111}
+.f.bad{border-color:#ff5a5a;background:rgba(255,80,80,.25)}
+button.go{width:100%;font-size:26px;font-weight:900;padding:16px;border-radius:18px;border:none;background:#ffc800;color:#222;cursor:pointer;margin-top:4px}
+button.go:active{transform:scale(.97)}
+button.link{background:none;border:none;color:#bcd;text-decoration:underline;margin-top:16px;font-size:16px;cursor:pointer}
+.msg{min-height:44px;font-size:clamp(22px,6vw,30px);font-weight:900;margin-top:10px;text-align:center}
+.msg.err{color:#ff8a8a}.msg.ok{color:#ffe36b}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:10}
+.win{font-size:clamp(20px,5vw,26px);text-align:center;margin-top:6px}
+</style></head><body>
+<canvas id="fx"></canvas>
+<h1>🔐 Treasure Hunt</h1>
+<p class="sub" id="sub">Which team are you?</p>
+
+<div class="screen on" id="s1"><div class="teams">
+<button class="team" data-t="white">White</button><button class="team" data-t="black">Black</button>
+<button class="team" data-t="grey">Grey</button><button class="team" data-t="red">Red</button></div></div>
+
+<div class="screen" id="s2">
+<div class="badge" id="badge"></div>
+<div id="lockwrap"><svg class="lock" id="lock" viewBox="0 0 140 170">
+<g class="shackle"><path d="M32 78V52a38 38 0 0 1 76 0v26" fill="none" stroke="#c9ccd3" stroke-width="15" stroke-linecap="round"/></g>
+<rect x="10" y="74" width="120" height="90" rx="18" fill="var(--c)" stroke="var(--c2)" stroke-width="6"/>
+<circle cx="70" cy="110" r="11" fill="var(--c2)"/><path d="M63 114h14l4 28H59z" fill="var(--c2)"/></svg></div>
+<div class="fields" id="fields"></div>
+<button class="go" id="go">Unlock! 🔓</button>
+<div class="msg" id="msg"></div>
+<button class="link" id="back">← Change team</button>
+</div>
+
+<script>
+var SALT="scout2026";
+var H={"white": [["8190f6d3"], ["d30387f3"], ["7521747b"], ["e400932e"]], "grey": [["768f605b"], ["30f25a44", "49244dc4"], ["8f6b2462"], ["db7b78d0"]], "red": [["324adf21"], ["41fc7f52"], ["58dfce63"], ["f02c00bc"]], "black": [["a8a4e8e5"], ["4ed6f3c6"], ["fcadf2c5"], ["bee359da"]]};
+var COL={white:["#ffffff","#555"],black:["#202020","#000"],grey:["#8a8f98","#4a4f58"],red:["#e0272d","#8e0f14"]};
+function fnv(s){var h=0x811c9dc5>>>0;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return ("00000000"+h.toString(16)).slice(-8)}
+function norm(v){return v.replace(/\D/g,"").replace(/^0+(?=\d)/,"")}
+var team=null;
+function $(i){return document.getElementById(i)}
+function show(id){document.querySelectorAll(".screen").forEach(function(e){e.classList.remove("on")});$(id).classList.add("on")}
+document.querySelectorAll(".team").forEach(function(b){b.onclick=function(){pick(b.dataset.t)}});
+function pick(t){team=t;var c=COL[t];var r=document.documentElement.style;r.setProperty("--c",c[0]);r.setProperty("--c2",c[1]);
+ var bd=$("badge");bd.textContent=t+" team";bd.style.background=c[0];bd.style.color=(t==="white"||t==="grey")?"#111":"#fff";bd.style.borderColor=c[1]==="#000"?"#fff":c[1];
+ var f=$("fields");f.innerHTML="";for(var i=0;i<4;i++){f.insertAdjacentHTML("beforeend",'<div class="f" id="f'+i+'"><label><i>'+(i+1)+'</i>Checkpoint '+(i+1)+'</label><input inputmode="numeric" autocomplete="off" id="in'+i+'" maxlength="6"></div>')}
+ $("lockwrap").className="";$("msg").textContent="";$("msg").className="msg";$("go").style.display="";
+ $("sub").textContent="Type the number from each checkpoint";show("s2");$("in0").focus()}
+$("back").onclick=function(){$("sub").textContent="Which team are you?";show("s1")};
+$("go").onclick=check;
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&$("s2").classList.contains("on"))check()});
+function check(){
+ var ok=true,m=$("msg");
+ for(var i=0;i<4;i++){var v=norm($("in"+i).value);var good=v!==""&&H[team][i].indexOf(fnv(SALT+"|"+team+"|"+i+"|"+v))>-1;$("f"+i).classList.toggle("bad",!good);if(!good)ok=false}
+ if(!ok){m.className="msg err";m.textContent="Try again! 🤔";var w=$("lockwrap");w.classList.remove("shake");void w.offsetWidth;w.classList.add("shake");return}
+ m.className="msg ok";m.innerHTML="UNLOCKED! 🎉<div class='win'>Well done, "+team+" team!</div>";
+ $("lockwrap").className="open glow";$("go").style.display="none";confetti()}
+var cv=$("fx"),cx=cv.getContext("2d"),P=[];
+function size(){cv.width=innerWidth;cv.height=innerHeight}size();addEventListener("resize",size);
+function confetti(){var cols=["#ffc800","#ff4d6d","#4cc9f0","#7bf1a8","#fff","#b388ff","#ff9f1c"];
+ for(var i=0;i<230;i++)P.push({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.6,w:6+Math.random()*8,h:14+Math.random()*22,vy:2+Math.random()*4,vx:-1.5+Math.random()*3,r:Math.random()*6,vr:-.2+Math.random()*.4,c:cols[i%cols.length],s:Math.random()*6});
+ if(!running){running=1;requestAnimationFrame(tick)}}
+var running=0;
+function tick(){cx.clearRect(0,0,cv.width,cv.height);
+ P.forEach(function(p){p.y+=p.vy;p.x+=p.vx+Math.sin((p.y+p.s*40)/40)*1.3;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2))+2);cx.restore()});
+ P=P.filter(function(p){return p.y<cv.height+40});
+ if(P.length)requestAnimationFrame(tick);else{running=0;cx.clearRect(0,0,cv.width,cv.height)}}
+</script></body></html>
